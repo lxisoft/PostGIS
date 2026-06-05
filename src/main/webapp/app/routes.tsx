@@ -15,6 +15,9 @@ import PrivateRoute from 'app/shared/auth/private-route';
 import ErrorBoundaryRoutes from 'app/shared/error/error-boundary-routes';
 import PageNotFound from 'app/shared/error/page-not-found';
 import { AUTHORITIES } from 'app/config/constants';
+import NearbyCustomersMap from 'app/modules/geo/NearbyCustomersMap';
+import ZonesMap from 'app/modules/geo/ZonesMap';
+import ZoneCheckWidget from 'app/modules/geo/ZoneCheckWidget';
 
 const loading = <div>loading ...</div>;
 
@@ -63,6 +66,31 @@ const AppRoutes = () => {
           element={
             <PrivateRoute hasAnyAuthorities={[AUTHORITIES.USER]}>
               <EntitiesRoutes />
+            </PrivateRoute>
+          }
+        />
+        {/* GeoDelivery spatial routes — PostGIS-powered */}
+        <Route
+          path="geo/customers"
+          element={
+            <PrivateRoute hasAnyAuthorities={[AUTHORITIES.USER]}>
+              <NearbyCustomersMap />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="geo/zones"
+          element={
+            <PrivateRoute hasAnyAuthorities={[AUTHORITIES.USER]}>
+              <ZonesMap />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="geo/zone-check"
+          element={
+            <PrivateRoute hasAnyAuthorities={[AUTHORITIES.USER]}>
+              <ZoneCheckWidget />
             </PrivateRoute>
           }
         />

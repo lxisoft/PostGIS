@@ -13,11 +13,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import tech.jhipster.config.JHipsterConstants;
 
-/**
- * Aspect for logging execution of service and repository Spring components.
- *
- * By default, it only runs with the "dev" profile.
- */
+// Logs method entry/exit for all Spring beans in the application packages.
+// Active only in the dev profile.
 @Aspect
 public class LoggingAspect {
 
@@ -27,44 +24,22 @@ public class LoggingAspect {
         this.env = env;
     }
 
-    /**
-     * Pointcut that matches all repositories, services and Web REST endpoints.
-     */
     @Pointcut(
         "within(@org.springframework.stereotype.Repository *)" +
         " || within(@org.springframework.stereotype.Service *)" +
         " || within(@org.springframework.web.bind.annotation.RestController *)"
     )
-    public void springBeanPointcut() {
-        // Method is empty as this is just a Pointcut, the implementations are in the advices.
-    }
+    public void springBeanPointcut() {}
 
-    /**
-     * Pointcut that matches all Spring beans in the application's main packages.
-     */
     @Pointcut(
         "within(com.lxisoft.aps.repository..*)" + " || within(com.lxisoft.aps.service..*)" + " || within(com.lxisoft.aps.web.rest..*)"
     )
-    public void applicationPackagePointcut() {
-        // Method is empty as this is just a Pointcut, the implementations are in the advices.
-    }
+    public void applicationPackagePointcut() {}
 
-    /**
-     * Retrieves the {@link Logger} associated to the given {@link JoinPoint}.
-     *
-     * @param joinPoint join point we want the logger for.
-     * @return {@link Logger} associated to the given {@link JoinPoint}.
-     */
     private Logger logger(JoinPoint joinPoint) {
         return LoggerFactory.getLogger(joinPoint.getSignature().getDeclaringTypeName());
     }
 
-    /**
-     * Advice that logs methods throwing exceptions.
-     *
-     * @param joinPoint join point for advice.
-     * @param e exception.
-     */
     @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
         if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT))) {
@@ -84,13 +59,6 @@ public class LoggingAspect {
         }
     }
 
-    /**
-     * Advice that logs when a method is entered and exited.
-     *
-     * @param joinPoint join point for advice.
-     * @return result.
-     * @throws Throwable throws {@link IllegalArgumentException}.
-     */
     @Around("applicationPackagePointcut() && springBeanPointcut()")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         Logger log = logger(joinPoint);

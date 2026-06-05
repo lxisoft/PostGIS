@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <!--
+        Added the entity Customer.
+        Includes home_location geography(Point,4326) column for PostGIS spatial queries.
+    -->
+    <changeSet id="20260605200250-1" author="jhipster">
+        <createTable tableName="customer">
+            <column name="id" type="bigint" autoIncrement="true" startWith="1500">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <!-- PostGIS geography column: stores GPS coordinates as WGS-84 Point -->
+            <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here -->
+        </createTable>
+    </changeSet>
+
+    <!-- Add PostGIS home_location column + GiST spatial index to customer table -->
+    <changeSet id="20260605200250-2-home-location" author="geodelivery-agent">
+        <sql>
+            ALTER TABLE customer
+            ADD COLUMN IF NOT EXISTS home_location geography(Point,4326);
+        </sql>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_customer_home_location
+            ON customer USING GIST(home_location);
+        </sql>
+    </changeSet>
+
+    <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here -->
+
+    <!--
+        Seed real customer data with Ottapalam coordinates.
+        Runs in 'dev' profile (not test/prod). Uses geography ST_GeographyFromText for coordinates.
+    -->
+    <changeSet id="20260605200250-3-seed-customers" author="geodelivery-agent" context="faker">
+        <sql>
+            INSERT INTO customer (name, home_location)
+            VALUES
+                ('Arjun Kumar',   ST_GeographyFromText('SRID=4326;POINT(76.6510 10.7710)')),
+                ('Sreeja Nair',   ST_GeographyFromText('SRID=4326;POINT(76.6490 10.7700)')),
+                ('Vinod Pillai',  ST_GeographyFromText('SRID=4326;POINT(76.6560 10.7750)')),
+                ('Meera Thomas',  ST_GeographyFromText('SRID=4326;POINT(76.6480 10.7680)'))
+            ON CONFLICT DO NOTHING;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

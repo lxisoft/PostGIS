@@ -1,3 +1,5 @@
+// Leaflet map CSS — must be imported before Bootstrap to avoid z-index conflicts
+@import 'leaflet/dist/leaflet.css';
 // Override Bootstrap variables
 @import 'bootstrap-variables';
 // Import Bootstrap source files from node_modules

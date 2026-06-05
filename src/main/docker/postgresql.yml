@@ -2,11 +2,12 @@
 name: geodelivery
 services:
   postgresql:
-    image: postgres:17.2
+    image: postgis/postgis:17-3.4
     # volumes:
     #   - ~/volumes/jhipster/GeoDelivery/postgresql/:/var/lib/postgresql/data/
     environment:
       - POSTGRES_USER=GeoDelivery
+      - POSTGRES_DB=GeoDelivery
       - POSTGRES_HOST_AUTH_METHOD=trust
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER}']

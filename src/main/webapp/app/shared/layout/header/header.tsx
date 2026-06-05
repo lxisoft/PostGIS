@@ -2,8 +2,20 @@ import './header.scss';
 
 import React, { useState } from 'react';
 
-import { Collapse, Nav, Navbar, NavbarToggler } from 'reactstrap';
+import {
+  Collapse,
+  Nav,
+  Navbar,
+  NavbarToggler,
+  NavItem,
+  NavLink,
+  UncontrolledDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
+} from 'reactstrap';
 import LoadingBar from 'react-redux-loading-bar';
+import { NavLink as Link } from 'react-router-dom';
 
 import { AccountMenu, AdminMenu, EntitiesMenu } from '../menus';
 import { Brand, Home } from './header-components';
@@ -41,6 +53,25 @@ const Header = (props: IHeaderProps) => {
           <Nav id="header-tabs" className="ms-auto" navbar>
             <Home />
             {props.isAuthenticated && <EntitiesMenu />}
+            {/* GeoDelivery spatial menu — PostGIS-powered features */}
+            {props.isAuthenticated && (
+              <UncontrolledDropdown nav inNavbar id="geo-menu">
+                <DropdownToggle nav caret>
+                  🗺️ GeoDelivery
+                </DropdownToggle>
+                <DropdownMenu end>
+                  <DropdownItem tag={Link} to="/geo/customers" id="geo-customers-link">
+                    👥 Nearby Customers
+                  </DropdownItem>
+                  <DropdownItem tag={Link} to="/geo/zones" id="geo-zones-link">
+                    🏘️ Delivery Zones
+                  </DropdownItem>
+                  <DropdownItem tag={Link} to="/geo/zone-check" id="geo-zone-check-link">
+                    ✅ Zone Checker
+                  </DropdownItem>
+                </DropdownMenu>
+              </UncontrolledDropdown>
+            )}
             {props.isAuthenticated && props.isAdmin && <AdminMenu showOpenAPI={props.isOpenAPIEnabled} />}
             <AccountMenu isAuthenticated={props.isAuthenticated} />
           </Nav>

@@ -7,6 +7,15 @@
                         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
     <!--
+        Enable PostGIS extension — must run first so geography columns work in entity tables.
+        runAlways="false" ensures this runs once and is tracked in DATABASECHANGELOG.
+    -->
+    <changeSet id="00000000000000-postgis" author="geodelivery-agent">
+        <sql>CREATE EXTENSION IF NOT EXISTS postgis;</sql>
+        <sql>CREATE EXTENSION IF NOT EXISTS postgis_topology;</sql>
+    </changeSet>
+
+    <!--
         JHipster core tables.
         The initial schema has the '00000000000001' id, so that it is over-written if we re-generate it.
     -->
