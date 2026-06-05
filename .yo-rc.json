@@ -1,0 +1,32 @@
+{
+  "generator-jhipster": {
+    "applicationType": "monolith",
+    "authenticationType": "jwt",
+    "baseName": "GeoDelivery",
+    "buildTool": "maven",
+    "cacheProvider": null,
+    "clientFramework": "react",
+    "clientTestFrameworks": [],
+    "clientTheme": "none",
+    "creationTimestamp": 1780688630739,
+    "databaseType": "sql",
+    "devDatabaseType": "postgresql",
+    "enableHibernateCache": null,
+    "enableTranslation": false,
+    "entities": [],
+    "feignClient": null,
+    "jhipsterVersion": "8.8.0",
+    "jwtSecretKey": "ZjVkZWFmMjQ4ZjQ2MjYzN2NiMGRiZDc3ZmY1MDdjMDhhNGE0MmMzMTVmMmI1OGRjZDIxZGM3M2RhYTgzYTBlZWZmOWNlNzZjYzU5MGEzZTNhYWIxNmM4YTBiOWY1ZjkzYmVhYTFjMWJiNDZiODYyYWFiMTBjNDdjNjc3ZmFlYWI=",
+    "microfrontend": null,
+    "microfrontends": [],
+    "nativeLanguage": "en",
+    "packageName": "com.lxisoft.aps",
+    "prodDatabaseType": "postgresql",
+    "reactive": true,
+    "serverPort": null,
+    "serviceDiscoveryType": null,
+    "syncUserWithIdp": null,
+    "testFrameworks": [],
+    "withAdminUi": true
+  }
+}

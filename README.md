@@ -1,164 +1,242 @@
-# 🚀 Project Template: Standardized Development & Collaboration
+# GeoDelivery
 
-Welcome to the **Lxisoft Standard Project Template**!
+This application was generated using JHipster 8.8.0, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v8.8.0](https://www.jhipster.tech/documentation-archive/v8.8.0).
 
-This template repository is designed to ensure consistency, high traceability, and maintainability across all our software development projects. By using this template, you automatically inherit:
+## Project Structure
 
-1. Standardized **Epic, Feature, Story, and Task** issue templates.
-2. Mandatory **Conventional Commit** messages with issue ID linking.
-3. Automated **Semantic Versioning** and **Changelog** generation.
+Node is required for generation and recommended for development. `package.json` is always generated for a better development experience with prettier, commit hooks, scripts and so on.
 
-## 💡 About [LXISOFT](https://www.lxisoft.com): Driving Innovation
+In the project root, JHipster generates configuration files for tools like git, prettier, eslint, husky, and others that are well known and you can find references in the web.
 
-[LXISOFT](https://www.lxisoft.com) 
+`/src/*` structure follows default Java structure.
 
-From nurturing a nascent idea to swiftly crafting a prototype, continuously delivering and launching into production, and providing ongoing upgrades, we are dedicated to assisting you every step of the way. Our team comprises internationally certified Java developers who possess the prowess to transform your concepts into fully functional web applications or cross-platform mobile apps for Android, iPhone, iPad, Windows, and more. Additionally, we excel in developing SOA/Microservices-based architectures and Java web portals.
+- `.yo-rc.json` - Yeoman configuration file
+  JHipster configuration is stored in this file at `generator-jhipster` key. You may find `generator-jhipster-*` for specific blueprints configuration.
+- `.yo-resolve` (optional) - Yeoman conflict resolver
+  Allows to use a specific action when conflicts are found skipping prompts for files that matches a pattern. Each line should match `[pattern] [action]` with pattern been a [Minimatch](https://github.com/isaacs/minimatch#minimatch) pattern and action been one of skip (default if omitted) or force. Lines starting with `#` are considered comments and are ignored.
+- `.jhipster/*.json` - JHipster entity configuration files
 
-**Our Startups:**
-- [DivisoSofttech](https://www.lxisoft.com/startups/diviso-softtech)
-- [Byta-Tech](https://www.lxisoft.com/startups/byta-tech)
+- `npmw` - wrapper to use locally installed npm.
+  JHipster installs Node and npm locally using the build tool by default. This wrapper makes sure npm is installed locally and uses it avoiding some differences different versions can cause. By using `./npmw` instead of the traditional `npm` you can configure a Node-less environment to develop or test your application.
+- `/src/main/docker` - Docker configurations for the application and services that the application depends on
 
-**Our Focus Areas:**
+## Development
 
-* **Software Development Activities:** We utilize lean, agile methodologies (like the Epic-Feature-Story model) and BDD best practices to deliver robust, scalable, and user-centric software. Our core technology stack is broad and cloud-native, encompassing **Java**, **Python**, and **Flutter** for various development needs. We also leverage **JavaScript/TypeScript** with **Node.js**. Our foundational practices emphasize **AI**, **12 Factor Apps**, **Cloud**, **Container** technologies, **Kubernetes**, and high-throughput **Messaging Middleware** for resilient deployment.
+The build system will install automatically the recommended version of Node and npm.
 
-* **Internship Program:** We believe in nurturing the next generation of tech talent. Our comprehensive internship program offers hands-on experience, mentorship, and a direct pathway to full-time roles, fostering a culture of continuous learning and innovation.
+We provide a wrapper to launch npm.
+You will only need to run this command when dependencies change in [package.json](package.json).
 
-**Connect With Us:**
+```
+./npmw install
+```
 
-| Platform | Link | 
-| ----- | ----- | 
-| **Website** | [www.lxisoft.com](http://www.lxisoft.com) | 
-| **Facebook** | [@lxisoft](https://www.facebook.com/lxisoft) | 
-| **LinkedIn** | [@lxisoft](https://www.linkedin.com/company/lxisoft) | 
-| **Twitter/X** | [@lxisoft](https://twitter.com/lxisoft) | 
-| **Instagram** | [@lxisoft](https://www.instagram.com/lxisoft) | 
+We use npm scripts and [Webpack][] as our build system.
 
-## 🛠️ Developer Setup: Standardization Guide
+Run the following commands in two separate terminals to create a blissful development experience where your browser
+auto-refreshes when files change on your hard drive.
 
-This template uses **Husky** and **Commitlint** to automatically enforce commit message standards locally, and **Standard-Version** to manage releases.
+```
+./mvnw
+./npmw start
+```
 
-### 1. Initialize Project Standards (Mandatory)
+Npm is also used to manage CSS and JavaScript dependencies used in this application. You can upgrade dependencies by
+specifying a newer version in [package.json](package.json). You can also run `./npmw update` and `./npmw install` to manage dependencies.
+Add the `help` flag on any command to see how you can use it. For example, `./npmw help update`.
 
-After cloning your new repository from this template, run the following commands **one time** to install dependencies and activate the Git hooks:
+The `./npmw run` command will list all the scripts available to run for this project.
 
+### PWA Support
 
-### 1. Install project dependencies (this includes husky, commitlint, and standard-version)
+JHipster ships with PWA (Progressive Web App) support, and it's turned off by default. One of the main components of a PWA is a service worker.
 
-```npm install                                                ```
+The service worker initialization code is commented out by default. To enable it, uncomment the following code in `src/main/webapp/index.html`:
 
-### 2. The 'prepare' script in package.json automatically runs 'husky install'
- This activates the 'commit-msg' hook on your local machine, enforcing commit rules.
+```html
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js').then(function () {
+      console.log('Service Worker Registered');
+    });
+  }
+</script>
+```
 
-#### 📝 Commit Message Standards & Commitizen
+Note: [Workbox](https://developers.google.com/web/tools/workbox/) powers JHipster's service worker. It dynamically generates the `service-worker.js` file.
 
-All commits must follow the [Conventional Commits](https://www.conventionalcommits.org/) format and reference an issue ID in the body.
+### Managing dependencies
 
-**Standard commit types (`type-enum`):**
-- feat
-- fix
-- docs
-- style
-- refactor
-- perf
-- test
-- build
-- ci
-- chore
-- revert
+For example, to add [Leaflet][] library as a runtime dependency of your application, you would run following command:
 
-**Recommended scopes (`scope-enum`):**
-- api, app, auth, build, ci, config, core, docs, deps, devops, feature, infra, model, service, test, ui, util, web, mobile
-- Flutter: widget, screen, bloc, provider, theme, assets
-- Java: controller, repository, entity, service, dto, spring, jpa
-- TS/JS: component, hook, store, redux, context, types, eslint, webpack
+```
+./npmw install --save --save-exact leaflet
+```
 
-**How to create a commit:**
-- Use Commitizen for interactive commit messages:
+To benefit from TypeScript type definitions from [DefinitelyTyped][] repository in development, you would run following command:
 
-```npx cz                                            ```
+```
+./npmw install --save-dev --save-exact @types/leaflet
+```
 
-#### 🚀 Release Process (Semantic Versioning & Changelog)
+Then you would import the JS and CSS files specified in library's installation instructions so that [Webpack][] knows about them:
+Note: There are still a few other things remaining to do for Leaflet that we won't detail here.
 
-This project uses [standard-version](https://github.com/conventional-changelog/standard-version) for automated releases:
+For further instructions on how to develop with JHipster, have a look at [Using JHipster in development][].
 
-1. **Commit your changes** using conventional commit messages.
-2. **Run the release command:**
-3. ``` npx standard-version                          ```
+## Building for production
 
+### Packaging as jar
 
-3. **What happens:**
-- The version in `package.json` is bumped (major, minor, or patch).
-- A `CHANGELOG.md` is generated or updated.
-- A new git commit and tag are created for the release.
-4. **Push your changes and tags:**
+To build the final jar and optimize the GeoDelivery application for production, run:
 
+```
+./mvnw -Pprod clean verify
+```
 
-``` git push --follow-tags                          ```
+This will concatenate and minify the client CSS and JavaScript files. It will also modify `index.html` so it references these new files.
+To ensure everything worked, run:
 
+```
+java -jar target/*.jar
+```
 
-This automates semantic versioning and changelog management for your project.
----
+Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 
-### 🔀 Branching & Release Workflow
+Refer to [Using JHipster in production][] for more details.
 
-This repository uses two main branches:
+### Packaging as war
 
-- `main`: Stable production-ready code. Releases are tagged from here.
-- `developer`: Active development. All new features, fixes, and changes are merged here first.
+To package your application as a war in order to deploy it to an application server, run:
 
-**Recommended workflow:**
+```
+./mvnw -Pprod,war clean verify
+```
 
-1. Work on feature or fix branches, then merge into `developer`.
-2. Regularly merge `developer` into `main` after review and testing.
-3. Run the release process from the `main` branch:
-	 - Ensure all changes from `developer` are merged into `main`.
-	 - Run:
-		 ```
-		 npx standard-version
-		 git push --follow-tags
-		 ```
-	 - This will bump the version, update the changelog, and tag the release.
-4. Optionally, create release branches (e.g., `release/v1.0.0`) for hotfixes or pre-release testing.
+### JHipster Control Center
 
-**Summary:**
-- All development happens in `developer`.
-- Only stable, reviewed code is merged to `main` and released.
-- Releases are always tagged from `main`.
+JHipster Control Center can help you manage and control your application(s). You can start a local control center server (accessible on http://localhost:7419) with:
 
-**Recommended workflow:**
+```
+docker compose -f src/main/docker/jhipster-control-center.yml up
+```
 
-1. Work on feature or fix branches, then merge into `developer`.
-	 - Create a new branch for your work:
-		 ```
-		 git checkout developer
-		 git pull
-		 git checkout -b feature/my-new-feature
-		 ```
-	 - After committing your changes, push and create a pull request to `developer`:
-		 ```
-		 git push origin feature/my-new-feature
-		 ```
-2. Regularly merge `developer` into `main` after review and testing:
-	 - Merge changes from `developer` to `main`:
-		 ```
-		 git checkout main
-		 git pull
-		 git merge developer
-		 git push origin main
-		 ```
-3. Run the release process from the `main` branch:
-	 - Ensure all changes from `developer` are merged into `main`.
-	 - Run:
-		 ```
-		 npx standard-version
-		 git push --follow-tags
-		 ```
-	 - This will bump the version, update the changelog, and tag the release.
-4. Optionally, create release branches (e.g., `release/v1.0.0`) for hotfixes or pre-release testing:
-	 ```
-	 git checkout main
-	 git pull
-	 git checkout -b release/v1.0.0
-	 git push origin release/v1.0.0
-	 ```
+## Testing
+
+### Spring Boot tests
+
+To launch your application's tests, run:
+
+```
+./mvnw verify
+```
+
+### Client tests
+
+Unit tests are run by [Jest][]. They're located in [src/test/javascript/](src/test/javascript/) and can be run with:
+
+```
+./npmw test
+```
+
+## Others
+
+### Code quality using Sonar
+
+Sonar is used to analyse code quality. You can start a local Sonar server (accessible on http://localhost:9001) with:
+
+```
+docker compose -f src/main/docker/sonar.yml up -d
+```
+
+Note: we have turned off forced authentication redirect for UI in [src/main/docker/sonar.yml](src/main/docker/sonar.yml) for out of the box experience while trying out SonarQube, for real use cases turn it back on.
+
+You can run a Sonar analysis with using the [sonar-scanner](https://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner) or by using the maven plugin.
+
+Then, run a Sonar analysis:
+
+```
+./mvnw -Pprod clean verify sonar:sonar -Dsonar.login=admin -Dsonar.password=admin
+```
+
+If you need to re-run the Sonar phase, please be sure to specify at least the `initialize` phase since Sonar properties are loaded from the sonar-project.properties file.
+
+```
+./mvnw initialize sonar:sonar -Dsonar.login=admin -Dsonar.password=admin
+```
+
+Additionally, Instead of passing `sonar.password` and `sonar.login` as CLI arguments, these parameters can be configured from [sonar-project.properties](sonar-project.properties) as shown below:
+
+```
+sonar.login=admin
+sonar.password=admin
+```
+
+For more information, refer to the [Code quality page][].
+
+### Docker Compose support
+
+JHipster generates a number of Docker Compose configuration files in the [src/main/docker/](src/main/docker/) folder to launch required third party services.
+
+For example, to start required services in Docker containers, run:
+
+```
+docker compose -f src/main/docker/services.yml up -d
+```
+
+To stop and remove the containers, run:
+
+```
+docker compose -f src/main/docker/services.yml down
+```
+
+[Spring Docker Compose Integration](https://docs.spring.io/spring-boot/reference/features/dev-services.html) is enabled by default. It's possible to disable it in application.yml:
+
+```yaml
+spring:
+  ...
+  docker:
+    compose:
+      enabled: false
+```
+
+You can also fully dockerize your application and all the services that it depends on.
+To achieve this, first build a Docker image of your app by running:
+
+```sh
+npm run java:docker
+```
+
+Or build a arm64 Docker image when using an arm64 processor os like MacOS with M1 processor family running:
+
+```sh
+npm run java:docker:arm64
+```
+
+Then run:
+
+```sh
+docker compose -f src/main/docker/app.yml up -d
+```
+
+For more information refer to [Using Docker and Docker-Compose][], this page also contains information on the Docker Compose sub-generator (`jhipster docker-compose`), which is able to generate Docker configurations for one or several JHipster applications.
+
+## Continuous Integration (optional)
+
+To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][] page for more information.
+
+[JHipster Homepage and latest documentation]: https://www.jhipster.tech
+[JHipster 8.8.0 archive]: https://www.jhipster.tech/documentation-archive/v8.8.0
+[Using JHipster in development]: https://www.jhipster.tech/documentation-archive/v8.8.0/development/
+[Using Docker and Docker-Compose]: https://www.jhipster.tech/documentation-archive/v8.8.0/docker-compose
+[Using JHipster in production]: https://www.jhipster.tech/documentation-archive/v8.8.0/production/
+[Running tests page]: https://www.jhipster.tech/documentation-archive/v8.8.0/running-tests/
+[Code quality page]: https://www.jhipster.tech/documentation-archive/v8.8.0/code-quality/
+[Setting up Continuous Integration]: https://www.jhipster.tech/documentation-archive/v8.8.0/setting-up-ci/
+[Node.js]: https://nodejs.org/
+[NPM]: https://www.npmjs.com/
+[Webpack]: https://webpack.github.io/
+[BrowserSync]: https://www.browsersync.io/
+[Jest]: https://facebook.github.io/jest/
+[Leaflet]: https://leafletjs.com/
+[DefinitelyTyped]: https://definitelytyped.org/
