@@ -13,7 +13,7 @@
     "devDatabaseType": "postgresql",
     "enableHibernateCache": null,
     "enableTranslation": false,
-    "entities": ["Customer", "DeliveryRequest", "DeliveryZone"],
+    "entities": [],
     "feignClient": null,
     "jhipsterVersion": "8.8.0",
     "jwtSecretKey": "ZjVkZWFmMjQ4ZjQ2MjYzN2NiMGRiZDc3ZmY1MDdjMDhhNGE0MmMzMTVmMmI1OGRjZDIxZGM3M2RhYTgzYTBlZWZmOWNlNzZjYzU5MGEzZTNhYWIxNmM4YTBiOWY1ZjkzYmVhYTFjMWJiNDZiODYyYWFiMTBjNDdjNjc3ZmFlYWI=",

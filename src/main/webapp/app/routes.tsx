@@ -10,14 +10,12 @@ import PasswordResetInit from 'app/modules/account/password-reset/init/password-
 import PasswordResetFinish from 'app/modules/account/password-reset/finish/password-reset-finish';
 import Logout from 'app/modules/login/logout';
 import Home from 'app/modules/home/home';
-import EntitiesRoutes from 'app/entities/routes';
 import PrivateRoute from 'app/shared/auth/private-route';
 import ErrorBoundaryRoutes from 'app/shared/error/error-boundary-routes';
 import PageNotFound from 'app/shared/error/page-not-found';
 import { AUTHORITIES } from 'app/config/constants';
-import NearbyCustomersMap from 'app/modules/geo/NearbyCustomersMap';
-import ZonesMap from 'app/modules/geo/ZonesMap';
-import ZoneCheckWidget from 'app/modules/geo/ZoneCheckWidget';
+import SearchPage from 'app/modules/geo/SearchPage';
+import ResultsPage from 'app/modules/geo/ResultsPage';
 
 const loading = <div>loading ...</div>;
 
@@ -30,6 +28,7 @@ const Admin = Loadable({
   loader: () => import(/* webpackChunkName: "administration" */ 'app/modules/administration'),
   loading: () => loading,
 });
+
 const AppRoutes = () => {
   return (
     <div className="view-routes">
@@ -61,39 +60,9 @@ const AppRoutes = () => {
             </PrivateRoute>
           }
         />
-        <Route
-          path="*"
-          element={
-            <PrivateRoute hasAnyAuthorities={[AUTHORITIES.USER]}>
-              <EntitiesRoutes />
-            </PrivateRoute>
-          }
-        />
-        {/* GeoDelivery spatial routes — PostGIS-powered */}
-        <Route
-          path="geo/customers"
-          element={
-            <PrivateRoute hasAnyAuthorities={[AUTHORITIES.USER]}>
-              <NearbyCustomersMap />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="geo/zones"
-          element={
-            <PrivateRoute hasAnyAuthorities={[AUTHORITIES.USER]}>
-              <ZonesMap />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="geo/zone-check"
-          element={
-            <PrivateRoute hasAnyAuthorities={[AUTHORITIES.USER]}>
-              <ZoneCheckWidget />
-            </PrivateRoute>
-          }
-        />
+        {/* GIS Place Search — publicly accessible, no login required */}
+        <Route path="search" element={<SearchPage />} />
+        <Route path="results" element={<ResultsPage />} />
         <Route path="*" element={<PageNotFound />} />
       </ErrorBoundaryRoutes>
     </div>

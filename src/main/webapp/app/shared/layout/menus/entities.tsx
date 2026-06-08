@@ -1,10 +1,15 @@
 import React from 'react';
+import { NavLink as Link } from 'react-router-dom';
+import { NavItem, NavLink } from 'reactstrap';
 
-import EntitiesMenuItems from 'app/entities/menu';
-import { NavDropdown } from './menu-components';
-
+/**
+ * GeoSearch navigation menu item — replaces the old Entities menu.
+ * Links to the GIS place search page.
+ */
 export const EntitiesMenu = () => (
-  <NavDropdown icon="th-list" name="Entities" id="entity-menu" data-cy="entity" style={{ maxHeight: '80vh', overflow: 'auto' }}>
-    <EntitiesMenuItems />
-  </NavDropdown>
+  <NavItem>
+    <NavLink tag={Link} to="/search" id="geo-search-link" className="d-flex align-items-center">
+      <span>🗺️ Search Places</span>
+    </NavLink>
+  </NavItem>
 );
