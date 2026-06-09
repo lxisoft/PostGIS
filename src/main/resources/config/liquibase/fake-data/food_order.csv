@@ -1,5 +1,0 @@
-id;customer_name;delivery_address;delivery_location;status
-1;Arun Kumar;Ottapalam Town Centre;POINT(76.3772 10.7716);PENDING
-2;Priya Nair;Palakkad Railway Station;POINT(76.6548 10.7748);PENDING
-3;Ravi Menon;Ottapalam Bus Stand;POINT(76.3700 10.7680);DELIVERED
-4;Sneha Krishnan;Palakkad Fort Area;POINT(76.6580 10.7760);DELIVERED

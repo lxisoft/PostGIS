@@ -1,6 +1,0 @@
-id;name;cuisine;rating;location
-1;Pizza Corner;Pizza;4.5;POINT(76.3762 10.7716)
-2;Malabar Cafe;Indian;4.2;POINT(76.3780 10.7725)
-3;Palace Restaurant;Traditional;4.0;POINT(76.3712 10.7689)
-4;Fort Kitchen;Biryani;4.7;POINT(76.6565 10.7758)
-5;City Bakers;Bakery;3.9;POINT(76.6512 10.7722)

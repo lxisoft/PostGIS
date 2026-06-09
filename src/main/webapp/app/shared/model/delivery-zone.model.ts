@@ -1,8 +1,8 @@
 export interface IDeliveryZone {
   id?: number;
   name?: string;
+  description?: string | null;
   active?: boolean;
-  boundaryString?: string | null;
 }
 
 export const defaultValue: Readonly<IDeliveryZone> = {
