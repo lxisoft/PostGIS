@@ -1,0 +1,28 @@
+{
+  "annotations": {
+    "changelogDate": "20260609051146"
+  },
+  "applications": "*",
+  "dto": "mapstruct",
+  "fields": [
+    {
+      "fieldName": "name",
+      "fieldType": "String",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "status",
+      "fieldType": "PartnerStatus",
+      "fieldValidateRules": ["required"],
+      "fieldValues": "AVAILABLE,BUSY,OFFLINE"
+    },
+    {
+      "fieldName": "locationString",
+      "fieldType": "String"
+    }
+  ],
+  "name": "DeliveryPartner",
+  "relationships": [],
+  "searchEngine": "no",
+  "service": "serviceImpl"
+}

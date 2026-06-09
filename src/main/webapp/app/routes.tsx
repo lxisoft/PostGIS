@@ -16,6 +16,7 @@ import PageNotFound from 'app/shared/error/page-not-found';
 import { AUTHORITIES } from 'app/config/constants';
 import SearchPage from 'app/modules/geo/SearchPage';
 import ResultsPage from 'app/modules/geo/ResultsPage';
+import SwiggyApp from 'app/modules/swiggy/SwiggyApp';
 
 const loading = <div>loading ...</div>;
 
@@ -63,6 +64,7 @@ const AppRoutes = () => {
         {/* GIS Place Search — publicly accessible, no login required */}
         <Route path="search" element={<SearchPage />} />
         <Route path="results" element={<ResultsPage />} />
+        <Route path="swiggy" element={<SwiggyApp />} />
         <Route path="*" element={<PageNotFound />} />
       </ErrorBoundaryRoutes>
     </div>

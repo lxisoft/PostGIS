@@ -1,0 +1,42 @@
+entity Restaurant {
+    name String required
+    cuisine String
+    rating Double
+    locationString String
+}
+
+entity DeliveryZone {
+    name String required
+    active Boolean required
+    boundaryString String
+}
+
+entity DeliveryPartner {
+    name String required
+    status PartnerStatus required
+    locationString String
+}
+
+entity FoodOrder {
+    customerName String required
+    deliveryAddress String required
+    deliveryLocationString String
+    status OrderStatus required
+}
+
+enum PartnerStatus {
+    AVAILABLE, BUSY, OFFLINE
+}
+
+enum OrderStatus {
+    PENDING, ASSIGNED, DELIVERED
+}
+
+relationship ManyToOne {
+    FoodOrder{restaurant} to Restaurant
+    FoodOrder{deliveryPartner} to DeliveryPartner
+}
+
+paginate Restaurant, FoodOrder with pagination
+service all with serviceImpl
+dto all with mapstruct
