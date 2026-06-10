@@ -43,7 +43,7 @@ spring:
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/GeoDelivery
     username: GeoDelivery
-    password: arjun7945
+    password:
   thymeleaf:
     cache: true
 

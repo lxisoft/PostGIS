@@ -10,12 +10,12 @@ import PasswordResetInit from 'app/modules/account/password-reset/init/password-
 import PasswordResetFinish from 'app/modules/account/password-reset/finish/password-reset-finish';
 import Logout from 'app/modules/login/logout';
 import Home from 'app/modules/home/home';
+import EntitiesRoutes from 'app/entities/routes';
 import PrivateRoute from 'app/shared/auth/private-route';
 import ErrorBoundaryRoutes from 'app/shared/error/error-boundary-routes';
 import PageNotFound from 'app/shared/error/page-not-found';
 import { AUTHORITIES } from 'app/config/constants';
-import SearchPage from 'app/modules/geo/SearchPage';
-import ResultsPage from 'app/modules/geo/ResultsPage';
+import SwiggyApp from 'app/modules/swiggy/SwiggyApp';
 
 const loading = <div>loading ...</div>;
 
@@ -28,12 +28,12 @@ const Admin = Loadable({
   loader: () => import(/* webpackChunkName: "administration" */ 'app/modules/administration'),
   loading: () => loading,
 });
-
 const AppRoutes = () => {
   return (
     <div className="view-routes">
       <ErrorBoundaryRoutes>
         <Route index element={<Home />} />
+        <Route path="swiggy" element={<SwiggyApp />} />
         <Route path="login" element={<Login />} />
         <Route path="logout" element={<Logout />} />
         <Route path="account">
@@ -60,9 +60,14 @@ const AppRoutes = () => {
             </PrivateRoute>
           }
         />
-        {/* GIS Place Search — publicly accessible, no login required */}
-        <Route path="search" element={<SearchPage />} />
-        <Route path="results" element={<ResultsPage />} />
+        <Route
+          path="*"
+          element={
+            <PrivateRoute hasAnyAuthorities={[AUTHORITIES.USER]}>
+              <EntitiesRoutes />
+            </PrivateRoute>
+          }
+        />
         <Route path="*" element={<PageNotFound />} />
       </ErrorBoundaryRoutes>
     </div>

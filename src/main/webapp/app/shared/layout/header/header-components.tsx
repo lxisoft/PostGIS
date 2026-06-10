@@ -26,3 +26,12 @@ export const Home = () => (
     </NavLink>
   </NavItem>
 );
+
+export const SwiggyMenu = () => (
+  <NavItem>
+    <NavLink tag={Link} to="/swiggy" className="d-flex align-items-center">
+      <FontAwesomeIcon icon="utensils" />
+      <span>Swiggy Spatial</span>
+    </NavLink>
+  </NavItem>
+);

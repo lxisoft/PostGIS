@@ -1,0 +1,27 @@
+{
+  "annotations": {
+    "changelogDate": "20260609095401"
+  },
+  "applications": "*",
+  "dto": "mapstruct",
+  "fields": [
+    {
+      "fieldName": "name",
+      "fieldType": "String",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "active",
+      "fieldType": "Boolean",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "boundary",
+      "fieldType": "String"
+    }
+  ],
+  "name": "DeliveryZone",
+  "relationships": [],
+  "searchEngine": "no",
+  "service": "serviceImpl"
+}

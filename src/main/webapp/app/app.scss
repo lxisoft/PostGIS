@@ -1,5 +1,3 @@
-// Leaflet map CSS — must be imported before Bootstrap to avoid z-index conflicts
-@import 'leaflet/dist/leaflet.css';
 // Override Bootstrap variables
 @import 'bootstrap-variables';
 // Import Bootstrap source files from node_modules
@@ -315,3 +313,4 @@ http://stackoverflow.com/questions/23436430/bootstrap-3-input-group-100-width */
 }
 
 /* jhipster-needle-scss-add-main JHipster will add new css style */
+@import './modules/swiggy/swiggy';
