@@ -1,57 +1,60 @@
 # 🌍 GeoDelivery — PostGIS Learning Platform
 
-> **A two-branch repository designed to teach geospatial programming through two complementary architectural approaches — one using a spatial database (PostGIS) and one using live OpenStreetMap APIs.**
+> **A two-branch repository containing two separate, complete projects — each teaching a different architectural approach to solving real-world geospatial problems in a food-delivery context.**
 
 ---
 
-## 📦 Repository Structure — Two Branches, Two Approaches
+## 📦 Two Projects, Two Branches
 
-This repository contains **two separate, standalone projects** living on two Git branches. Each branch teaches a different approach to solving the same core problem: _"How do you find places near a GPS coordinate?"_
+This repository has **two independent applications** on two Git branches. Each branch is a fully working, self-contained project with its own tech stack, APIs, database design, and learning goals. Both use the same food-delivery domain (restaurants, delivery zones, riders) to teach different approaches to location-aware programming.
 
-|                           | `feat/scenario-a-swiggy`                                                  | `main`                                                        |
-| ------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| **Project Name**          | GeoDelivery — Scenario A                                                  | GeoPlace — OSM Place Finder                                   |
-| **Approach**              | Database-backed PostGIS spatial queries                                   | External API-driven (Nominatim + Overpass / OpenStreetMap)    |
-| **Architecture**          | All computation inside PostgreSQL via PostGIS functions                   | Computation via live OSM web APIs, Java Haversine formula     |
-| **Frontend**              | Angular (data table + map via Swiggy-style UI)                            | React + Leaflet interactive map                               |
-| **Database**              | PostgreSQL + PostGIS with `GEOGRAPHY` native types + GiST spatial indexes | Standard PostgreSQL (no spatial extension needed)             |
-| **External Dependencies** | None — fully self-hosted                                                  | Nominatim & Overpass API (OpenStreetMap public servers)       |
-| **Focus**                 | Learning PostGIS SQL, spatial indexes, geodesic functions                 | Learning OSM API integration, geocoding, Haversine formula    |
-| **Detailed Guide**        | [`src/guide/README.md`](src/guide/README.md) on this branch               | [`src/guide/README.md`](src/guide/README.md) on `main` branch |
+```
+PostGIS (repository)
+│
+├── main  ──────────────────────────────────── GeoPlace: OSM Place Finder
+│   Branch teaches: Nominatim geocoding, Overpass API,
+│                   Haversine formula, React + Leaflet maps
+│
+└── feat/scenario-a-swiggy ─────────────────── GeoDelivery: PostGIS Scenario A
+    Branch teaches: PostGIS SQL, native geography columns,
+                    GiST spatial indexes, ST_DWithin, ST_Contains, KNN
+```
 
----
-
-## 🔀 How to Switch Between Projects
+**Switch between them:**
 
 ```bash
-# Switch to Scenario A — PostGIS database-backed project
+# Switch to the PostGIS / Scenario A project
 git checkout feat/scenario-a-swiggy
 
-# Switch to Scenario B — OpenStreetMap API-driven project
+# Switch to the OpenStreetMap API project
 git checkout main
 ```
 
-> Each branch has its own `src/guide/README.md` with a deep, step-by-step guide specific to that project.
+Each branch has a detailed step-by-step guide in `src/guide/README.md`.
 
 ---
 
 ---
 
-# 🌿 Branch: `feat/scenario-a-swiggy` — Scenario A (Database-Backed PostGIS)
+# 🌿 Branch: `feat/scenario-a-swiggy`
 
-> **The PostGIS branch.** All geospatial computation happens inside PostgreSQL using native spatial types, GiST indexes, and PostGIS SQL functions. No external APIs. No application-memory distance loops. Pure database-engine spatial power.
+## GeoDelivery — Scenario A: Database-Backed PostGIS Spatial Queries
 
-## What This Project Does
+> All geospatial computation is handled **inside PostgreSQL** using native PostGIS spatial types, GiST spatial indexes, and spatial SQL functions. No external mapping APIs. No application-memory filtering. Pure database-engine power.
 
-This branch simulates the backend of a food delivery platform (like Swiggy or Zomato). It demonstrates **Scenario A**: storing geographic coordinates as native PostGIS `GEOGRAPHY` types and running all spatial queries inside the database engine.
+### What This Project Does
 
-Every time a user opens the app, the following spatial challenges are solved in milliseconds using PostGIS:
+This branch simulates the backend of a Swiggy/Zomato-style food delivery platform. It implements **Scenario A** — the industry-standard approach where GPS coordinates are stored as native `GEOGRAPHY` columns and all proximity queries run inside the database using PostGIS functions.
 
-1. **Zone Validation** — Is this customer's GPS location inside an active delivery zone polygon? (`ST_Contains`)
-2. **Nearby Restaurants** — Which restaurants are within 5 km of the customer, sorted by distance? (`ST_DWithin` + `ST_Distance`)
-3. **Rider Assignment** — Which available delivery rider is physically closest to the restaurant right now? (KNN `<->` operator)
+Every API call triggers a spatial SQL query:
 
-## Core Entities
+| User Action                   | PostGIS Query Used                                                   |
+| ----------------------------- | -------------------------------------------------------------------- |
+| "Am I in a delivery zone?"    | `ST_Contains(boundary, userPoint)`                                   |
+| "Show me restaurants near me" | `ST_DWithin(location, userPoint, radiusMetres)` + `ST_Distance(...)` |
+| "Assign the nearest rider"    | `location::geometry <-> restaurantPoint ORDER BY ... LIMIT 1` (KNN)  |
+
+### Domain Model
 
 | Entity          | Table              | Spatial Column      | PostGIS Type                |
 | --------------- | ------------------ | ------------------- | --------------------------- |
@@ -60,13 +63,24 @@ Every time a user opens the app, the following spatial challenges are solved in 
 | DeliveryPartner | `delivery_partner` | `location`          | `GEOGRAPHY(Point, 4326)`    |
 | FoodOrder       | `food_order`       | `delivery_location` | WKT string `POINT(lng lat)` |
 
-All geography columns have **GiST spatial indexes** created automatically by Liquibase migrations, enabling O(log N) spatial queries.
+All three geography columns have **GiST spatial indexes** created automatically via Liquibase migrations, enabling O(log N) spatial queries.
 
-## Key PostGIS Queries
+### The Three Core PostGIS Queries
 
-### 1. Radius Search — `ST_DWithin` + `ST_Distance`
+#### 1. Zone Containment — `ST_Contains`
 
 ```sql
+-- "Is this customer inside an active delivery zone?"
+SELECT id, name, ST_AsText(boundary) AS boundary
+FROM delivery_zone
+WHERE ST_Contains(boundary::geometry, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geometry)
+  AND active = true;
+```
+
+#### 2. Radius Search — `ST_DWithin` + `ST_Distance`
+
+```sql
+-- "Which restaurants are within 5 km, sorted by distance?"
 SELECT id, name, cuisine, rating,
        ST_AsText(location) AS location,
        ST_Distance(location, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) AS distance
@@ -75,18 +89,10 @@ WHERE ST_DWithin(location, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
 ORDER BY distance ASC;
 ```
 
-### 2. Containment Check — `ST_Contains`
+#### 3. Nearest Rider — KNN `<->` Operator
 
 ```sql
-SELECT id, name, active, ST_AsText(boundary) AS boundary
-FROM delivery_zone
-WHERE ST_Contains(boundary::geometry, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geometry)
-  AND active = true;
-```
-
-### 3. Nearest Rider — KNN `<->` Operator
-
-```sql
+-- "Which available rider is physically closest to this restaurant?"
 SELECT id, name, status, ST_AsText(location) AS location
 FROM delivery_partner
 WHERE status = 'AVAILABLE'
@@ -94,123 +100,180 @@ ORDER BY location::geometry <-> ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)
 LIMIT 1;
 ```
 
-## Technology Stack
+### REST API Endpoints
 
-| Layer             | Technology                                       |
-| ----------------- | ------------------------------------------------ |
-| Database          | PostgreSQL 15 + PostGIS 3.3                      |
-| Backend Framework | Spring Boot 3 (reactive / WebFlux)               |
-| DB Driver         | Spring Data R2DBC (non-blocking)                 |
-| Schema Management | Liquibase (auto-creates GiST indexes on startup) |
-| API Layer         | Spring WebFlux REST (`/api/swiggy/*`)            |
-| Scaffolding       | JHipster 8.8.0                                   |
+| Method | Endpoint                                             | PostGIS Function             | What It Does                     |
+| ------ | ---------------------------------------------------- | ---------------------------- | -------------------------------- |
+| `GET`  | `/api/swiggy/zones/validate?lat=&lng=`               | `ST_Contains`                | Validate delivery zone           |
+| `GET`  | `/api/swiggy/restaurants/nearby?lat=&lng=&radiusKm=` | `ST_DWithin` + `ST_Distance` | Find nearby restaurants          |
+| `POST` | `/api/swiggy/orders`                                 | —                            | Place a food order               |
+| `POST` | `/api/swiggy/orders/assign?orderId=`                 | KNN `<->`                    | Assign nearest rider             |
+| `GET`  | `/api/swiggy/all-data`                               | —                            | All restaurants, zones, partners |
+| `POST` | `/api/swiggy/reset`                                  | —                            | Reset all riders to AVAILABLE    |
 
-## REST API Endpoints (`/api/swiggy/*`)
+### Technology Stack
 
-| Method | Endpoint                                             | PostGIS Function             | Description                                |
-| ------ | ---------------------------------------------------- | ---------------------------- | ------------------------------------------ |
-| `GET`  | `/api/swiggy/zones/validate?lat=&lng=`               | `ST_Contains`                | Check if coordinate is in a delivery zone  |
-| `GET`  | `/api/swiggy/restaurants/nearby?lat=&lng=&radiusKm=` | `ST_DWithin` + `ST_Distance` | Find nearby restaurants sorted by distance |
-| `POST` | `/api/swiggy/orders`                                 | —                            | Place a new food order                     |
-| `POST` | `/api/swiggy/orders/assign?orderId=`                 | KNN `<->`                    | Assign nearest available rider to order    |
-| `GET`  | `/api/swiggy/all-data`                               | —                            | Get all restaurants, zones, partners       |
-| `POST` | `/api/swiggy/reset`                                  | —                            | Reset all riders to AVAILABLE              |
+| Layer               | Technology                                |
+| ------------------- | ----------------------------------------- |
+| Database            | PostgreSQL 15 + PostGIS 3.3               |
+| Spatial column type | `GEOGRAPHY(Point/Polygon, 4326)`          |
+| Spatial indexing    | GiST indexes (auto-created by Liquibase)  |
+| Backend             | Spring Boot 3 + Spring WebFlux (reactive) |
+| DB Driver           | Spring Data R2DBC (non-blocking)          |
+| Frontend            | Angular                                   |
+| Scaffolding         | JHipster 8.8.0                            |
 
-## How to Run (Quick Start)
+### What You Learn
+
+- How PostGIS `GEOGRAPHY` type stores GPS coordinates as native database values
+- Why **GiST spatial indexes** make proximity queries run in O(log N) instead of O(N)
+- How `ST_DWithin` uses the spatial index for radius filtering (vs `ST_Distance` which does not)
+- How the KNN `<->` operator performs index-assisted nearest-neighbour search
+- How `ST_Contains` performs polygon containment checks for delivery zone validation
+- What WKT (Well-Known Text) format is and how PostGIS converts to/from it with `ST_AsText`
+- How SRID 4326 (WGS84 — the GPS coordinate system) works
+- Why `geography` type returns accurate metres while `geometry` uses flat-earth approximations
+
+### Quick Start
 
 **Prerequisites:** JDK 21, Docker Desktop
 
 ```bash
-# 1. Switch to this branch
+# 1. Switch to the branch
 git checkout feat/scenario-a-swiggy
 
 # 2. Start PostgreSQL + PostGIS via Docker
 docker compose -f src/main/docker/services.yml up -d
 
-# 3. Start Spring Boot (Liquibase runs migrations automatically)
+# 3. Start Spring Boot (Liquibase auto-runs migrations + GiST index creation)
 ./mvnw          # Linux/macOS
 mvnw.cmd        # Windows
 
-# 4. Open Swagger UI
-# http://localhost:8080/swagger-ui.html
+# 4. Explore the APIs
+# Swagger UI: http://localhost:8080/swagger-ui.html
+# Frontend:   http://localhost:4200 (run ./npmw start in a second terminal)
 ```
 
-> 📖 For the full deep-dive guide including PostGIS concepts, query explanations, seed data, troubleshooting and exercises — see [`src/guide/README.md`](src/guide/README.md) on this branch.
+**Verify PostGIS is working (connect to DB directly):**
+
+```bash
+docker exec -it $(docker ps -qf "name=postgresql") psql -U GeoDelivery -d GeoDelivery
+```
+
+```sql
+-- Confirm PostGIS is installed
+SELECT PostGIS_Version();
+
+-- Confirm GiST indexes exist
+SELECT indexname FROM pg_indexes WHERE indexdef LIKE '%gist%';
+
+-- Run a live proximity query
+SELECT name, ST_Distance(location, ST_SetSRID(ST_MakePoint(76.3762, 10.7716), 4326)::geography) AS dist_m
+FROM restaurant
+WHERE ST_DWithin(location, ST_SetSRID(ST_MakePoint(76.3762, 10.7716), 4326)::geography, 5000)
+ORDER BY dist_m;
+```
+
+> 📖 Full deep-dive guide (PostGIS concepts, query-by-query explanation, seed data, troubleshooting, exercises): **[`src/guide/README.md`](src/guide/README.md)** on the `feat/scenario-a-swiggy` branch.
 
 ---
 
 ---
 
-# 🌿 Branch: `main` — Scenario B (OpenStreetMap API-Driven Place Finder)
+# 🌿 Branch: `main`
 
-> **The live API branch.** Instead of querying a local spatial database, this application geocodes user-supplied location text via Nominatim (OSM's geocoding service) and searches real OpenStreetMap data via the Overpass API — all in real-time, with no pre-seeded database required.
+## GeoPlace — Scenario B: OpenStreetMap API-Driven Place Finder
 
-## What This Project Does
+> Geographic data is **not stored in the database**. Instead, all place data is fetched live from OpenStreetMap at search time using the free Nominatim geocoding API and the Overpass place search API. Distance is calculated in Java using the Haversine formula. Results are displayed on an interactive Leaflet map.
 
-The `main` branch is a **public-facing place search application** called **GeoPlace**. Users can search for any category of place (restaurants, hospitals, petrol pumps, ATMs, schools, hotels, etc.) near any location in India, and see the results on an interactive Leaflet map sorted by distance.
+### What This Project Does
 
-Unlike Scenario A, **there is no local spatial database**. All geographic data is fetched live from OpenStreetMap at query time.
+This branch is a **public-facing place search application** — users can search for any type of place (restaurants, hospitals, petrol pumps, ATMs, schools, hotels, pharmacies, banks, clinics, police stations, and more) near any location across India, and see the results pinned on a map.
 
-### The Two-Step Search Flow
+Unlike the `feat/scenario-a-swiggy` branch, **no geographic data is stored in the database**. The database is only used for standard JHipster user authentication. All location data comes from OpenStreetMap's free public APIs.
+
+### How It Works — The Two-Step Flow
 
 ```
-User enters:  Category = "restaurant"
-              State    = "Kerala"
-              District = "Palakkad"
-              Locality = "Ottapalam"   (optional)
-              Radius   = 5 km
-
-Step 1 — Geocoding (NominatimService)
-  GET https://nominatim.openstreetmap.org/search?q=Ottapalam,Palakkad,Kerala,India
-  → Returns: { lat: 10.771, lng: 76.376 }
-
-Step 2 — Place Search (OverpassService)
-  POST https://overpass-api.de/api/interpreter
-  → Overpass QL query for all [amenity=restaurant] within 5000m of (10.771, 76.376)
-  → Returns: raw OSM nodes + ways JSON
-
-Step 3 — Parse + Sort (Java — Haversine formula)
-  → Extract name, address, phone, website, opening_hours from OSM tags
-  → Calculate distance from center using Haversine formula
-  → Sort by distance ascending
-  → Return Flux<PlaceResultDTO>
-
-Step 4 — Frontend (React + Leaflet)
-  → Renders results on interactive map with emoji markers per category
-  → Shows result cards with address, phone, distance
-  → Click a card → map flies to that pin
+User searches: Restaurants near Ottapalam, Palakkad, Kerala (5 km radius)
+                              │
+                    ┌─────────▼──────────┐
+                    │  Step 1: Geocoding  │
+                    │  NominatimService   │
+                    │  GET nominatim.org  │
+                    │  "Ottapalam,        │
+                    │   Palakkad,         │
+                    │   Kerala, India"    │
+                    │  → lat=10.77        │
+                    │    lng=76.38        │
+                    └─────────┬──────────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │  Step 2: Places    │
+                    │  OverpassService   │
+                    │  POST overpass-api │
+                    │  Overpass QL:      │
+                    │  [amenity=         │
+                    │   restaurant]      │
+                    │  (around:5000,     │
+                    │   10.77, 76.38)    │
+                    │  → Flux of places  │
+                    └─────────┬──────────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │  Step 3: Haversine │
+                    │  Calculate metres  │
+                    │  from search centre│
+                    │  Sort by distance  │
+                    └─────────┬──────────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │  React + Leaflet   │
+                    │  Emoji markers on  │
+                    │  interactive map   │
+                    │  + result cards    │
+                    └────────────────────┘
 ```
 
-## Core Services
+### Core Services
 
-### `NominatimService`
+#### `NominatimService` — Text → Coordinates
 
-Converts a human-readable location string (`"Ottapalam, Palakkad, Kerala, India"`) into GPS coordinates using the **OpenStreetMap Nominatim API**.
+Calls the **OSM Nominatim API** to convert a human-readable location string into GPS coordinates.
 
-- **Free** — no API key required
+```java
+// "Ottapalam, Palakkad, Kerala, India" → double[]{ 10.7716, 76.3762 }
+public Mono<double[]> geocode(String locality, String district, String state)
+```
+
+- Free, no API key required
 - Restricted to India (`countrycodes=in`)
-- Returns `Mono<double[]> { lat, lng }`
+- Rate limit: 1 request/second on public Nominatim instance
 
-### `OverpassService`
+#### `OverpassService` — Live OSM Place Search
 
-Searches for real OpenStreetMap places of a given category near a GPS coordinate using the **Overpass API** (OSM's query engine).
+Builds and executes **Overpass QL** queries against the OpenStreetMap database.
 
-- Builds **Overpass QL** queries targeting both `node` (point) and `way` (area) OSM elements
-- Supports 12 place categories: restaurant, hospital, fuel, cafe, supermarket, pharmacy, bank, school, hotel, ATM, police, clinic
-- Parses OSM `tags` to extract: name, address, phone, website, opening_hours
+```java
+// Find all restaurants within 5000m of (10.7716, 76.3762)
+public Flux<PlaceResultDTO> searchNearby(double lat, double lng, double radiusMetres, String category)
+```
+
+- Queries both `node` (point) and `way` (polygon/building) OSM elements
+- Extracts name, address, phone, website, opening hours from OSM tags
 - Calculates distance using the **Haversine formula** (great-circle distance in metres)
-- Returns `Flux<PlaceResultDTO>` sorted by distance
+- Returns results sorted by distance ascending
 
-### `PlaceSearchResource` (`/api/places/*`)
+#### `PlaceSearchResource` — Public REST API
 
-The public REST controller — no login required. Orchestrates NominatimService + OverpassService.
+Orchestrates the two services. No login required — the `/api/places/*` endpoints are public.
 
 ```
 GET /api/places/search?category=restaurant&locality=Ottapalam&district=Palakkad&state=Kerala&radiusKm=5
-GET /api/places/geocode?locality=Ottapalam&district=Palakkad&state=Kerala
+GET /api/places/geocode?district=Palakkad&state=Kerala
 ```
 
-## Supported Place Categories
+### Supported Place Categories
 
 | Category        | OSM Tag              | Icon |
 | --------------- | -------------------- | ---- |
@@ -227,152 +290,152 @@ GET /api/places/geocode?locality=Ottapalam&district=Palakkad&state=Kerala
 | Police Stations | `amenity=police`     | 🚔   |
 | Clinics         | `amenity=clinic`     | 🩺   |
 
-## Frontend — React + Leaflet
+### Frontend — React + Leaflet Map
 
-The `main` branch uses **React** (not Angular like the Scenario A branch). The geo search module consists of:
+The frontend is built with **React** (not Angular). The geo module has two pages:
 
-### `SearchPage` (`/search`)
+**`SearchPage`** (`/search`) — Public, no login needed:
 
-- Category picker (icon grid)
-- State → District cascading dropdowns (all Indian states + districts built-in, no API call)
-- Optional locality text field
-- Radius selector (1 km / 3 km / 5 km / 10 km / 25 km)
-- **Public route — no login required**
+- Category icon grid (12 categories)
+- Cascading State → District dropdowns (all Indian states + districts built-in as static data)
+- Optional locality text field for sub-area precision
+- Radius selector: 1 / 3 / 5 / 10 / 25 km
+- Search summary preview before submitting
 
-### `ResultsPage` (`/results`)
+**`ResultsPage`** (`/results`) — Public:
 
-- Interactive **Leaflet map** with emoji markers for each result
-- Result cards list showing: name, address, distance, phone, website, opening hours
-- Click a result card → map flies to that marker
-- 3 km radius circle overlay on the map
+- Interactive **Leaflet map** with emoji pins for each result
+- Radius circle overlay on the map
+- Result cards: name, distance, address, phone, website, opening hours
+- Click a card → map flies to that marker
 - Back button to modify search
 
-## Technology Stack
+### Technology Stack
 
-| Layer             | Technology                                          |
-| ----------------- | --------------------------------------------------- |
-| Database          | Standard PostgreSQL (no PostGIS needed)             |
-| Backend Framework | Spring Boot 3 (reactive / WebFlux)                  |
-| External APIs     | Nominatim (OSM geocoding) + Overpass API (OSM data) |
-| HTTP Client       | Spring WebClient (reactive, non-blocking)           |
-| Distance Formula  | Haversine (Java, application-side)                  |
-| Frontend          | React + React Router + Leaflet (react-leaflet)      |
-| Scaffolding       | JHipster 8.8.0                                      |
+| Layer               | Technology                                |
+| ------------------- | ----------------------------------------- |
+| Database            | Standard PostgreSQL (no PostGIS needed)   |
+| Backend             | Spring Boot 3 + Spring WebFlux (reactive) |
+| External Geocoding  | OSM Nominatim API (free, no key)          |
+| External Place Data | OSM Overpass API (free, no key)           |
+| HTTP Client         | Spring WebClient (non-blocking)           |
+| Distance Formula    | Haversine (Java, application-side)        |
+| Frontend            | React + React Router                      |
+| Map                 | React-Leaflet + Leaflet.js                |
+| Scaffolding         | JHipster 8.8.0                            |
 
-## REST API Endpoints (`/api/places/*`)
+### What You Learn
 
-| Method | Endpoint                                                            | Description                     |
-| ------ | ------------------------------------------------------------------- | ------------------------------- |
-| `GET`  | `/api/places/search?category=&locality=&district=&state=&radiusKm=` | Search OSM places near location |
-| `GET`  | `/api/places/geocode?locality=&district=&state=`                    | Geocode location → lat/lng      |
+- How **Nominatim** geocodes free-text location strings to GPS coordinates
+- How **Overpass QL** queries OpenStreetMap's live database for specific place types
+- Why OSM uses different tag keys (`amenity`, `shop`, `tourism`) for different categories
+- How to query both `node` and `way` OSM elements and get coordinates from both
+- The **Haversine formula** — why Euclidean distance is wrong for GPS coordinates and how to correctly calculate great-circle distance
+- How `WebClient` makes reactive non-blocking HTTP calls to external APIs
+- How `Mono.flatMapMany()` chains a single geocode result into a stream of place results
+- How to build an interactive **Leaflet map** in React with custom emoji markers
+- How cascading dropdowns (State → District) work with no server calls
+- How URL query parameters make search results bookmarkable and shareable
 
-### Example Search Request
+### Quick Start
 
-```bash
-curl "http://localhost:8080/api/places/search?category=restaurant&locality=Ottapalam&district=Palakkad&state=Kerala&radiusKm=5"
-```
-
-### Example Response
-
-```json
-[
-  {
-    "osmId": 12345678,
-    "name": "Pizza Corner",
-    "lat": 10.7716,
-    "lng": 76.3762,
-    "category": "restaurant",
-    "street": "Main Road",
-    "city": "Ottapalam",
-    "state": "Kerala",
-    "postcode": "679101",
-    "phone": "+91-466-234567",
-    "website": null,
-    "openingHours": "Mo-Su 10:00-22:00",
-    "distanceMetres": 120.5,
-    "formattedDistance": "121 m",
-    "formattedAddress": "Main Road, Ottapalam, Kerala"
-  }
-]
-```
-
-## How to Run (Quick Start)
-
-**Prerequisites:** JDK 21, Docker Desktop (for standard PostgreSQL), Node.js 18+
+**Prerequisites:** JDK 21, Docker Desktop, Node.js 18+, Active Internet Connection
 
 ```bash
 # 1. Switch to this branch
 git checkout main
 
-# 2. Start PostgreSQL via Docker (standard, no PostGIS needed)
+# 2. Start PostgreSQL via Docker (standard — no PostGIS needed)
 docker compose -f src/main/docker/services.yml up -d
 
 # 3. Start Spring Boot backend
 ./mvnw          # Linux/macOS
 mvnw.cmd        # Windows
 
-# 4. (Optional) Start React frontend
-./npmw install && ./npmw start   # Linux/macOS
+# 4. Start React frontend (in a second terminal)
+./npmw install && ./npmw start      # Linux/macOS
 npmw.cmd install && npmw.cmd start  # Windows
 
 # 5. Open the app
-# Backend API:  http://localhost:8080
-# Frontend:     http://localhost:4200 (navigate to /search)
-# Swagger UI:   http://localhost:8080/swagger-ui.html
+# Place Search:  http://localhost:4200/search
+# Backend API:   http://localhost:8080
+# Swagger UI:    http://localhost:8080/swagger-ui.html
 ```
 
-> ⚠️ The `/api/places/search` endpoint makes live calls to `nominatim.openstreetmap.org` and `overpass-api.de`. An active internet connection is required. Nominatim enforces a rate limit of 1 request/second on the public instance.
+**Test the API directly (no auth needed):**
 
-> 📖 For the full deep-dive guide including code walkthrough, API reference, Overpass QL explained, Haversine formula, troubleshooting and exercises — see [`src/guide/README.md`](src/guide/README.md) on the `main` branch.
+```bash
+# Geocode a location
+curl "http://localhost:8080/api/places/geocode?district=Palakkad&state=Kerala"
+# → {"lat":10.7756,"lng":76.6514}
 
----
+# Search for hospitals within 10 km
+curl "http://localhost:8080/api/places/search?category=hospital&district=Palakkad&state=Kerala&radiusKm=10"
+# → [{...}, {...}]  — real OSM places
+```
 
-## 🔑 Scenario A vs Scenario B — Side-by-Side Comparison
+> ⚠️ Requires active internet — the backend makes live calls to `nominatim.openstreetmap.org` and `overpass-api.de`. Search results take 3–10 seconds as the OSM APIs process the query.
 
-| Question                        | Scenario A (`feat/scenario-a-swiggy`)              | Scenario B (`main`)                             |
-| ------------------------------- | -------------------------------------------------- | ----------------------------------------------- |
-| **Where is geo data stored?**   | PostgreSQL with PostGIS `GEOGRAPHY` native columns | OpenStreetMap (fetched live per request)        |
-| **Where is distance computed?** | Inside the database engine (PostGIS `ST_Distance`) | In Java application memory (Haversine formula)  |
-| **Radius filtering mechanism**  | `ST_DWithin` + GiST spatial index (O log N)        | Overpass API `around:` filter (OSM server-side) |
-| **Nearest-point search**        | PostGIS KNN `<->` operator with GiST index         | Overpass returns all within radius, Java sorts  |
-| **Database requirement**        | PostgreSQL + PostGIS extension                     | Standard PostgreSQL (no extension)              |
-| **Internet required?**          | No — fully self-contained                          | Yes — calls OSM public APIs                     |
-| **Data freshness**              | Seed data (static, loaded once)                    | Live OSM data (always current)                  |
-| **Geographic coverage**         | Ottapalam + Palakkad (demo data only)              | All of India (any state / district)             |
-| **API key required?**           | None                                               | None (OSM APIs are free)                        |
-| **Scale at production**         | Excellent (GiST index handles millions of rows)    | Limited by OSM public API rate limits           |
-| **What you learn**              | PostGIS SQL, spatial indexes, SRID, WKT, GiST      | Geocoding, Overpass QL, Haversine, Leaflet maps |
-
-### When to Use Which Approach in Production
-
-**Use Scenario A (PostGIS) when:**
-
-- You own the data (you populate and manage your own places)
-- You need sub-10ms response times at scale
-- You need containment checks (is a point inside a polygon?)
-- You need to avoid ongoing API costs and rate limits
-
-**Use Scenario B (External OSM APIs) when:**
-
-- You need real, up-to-date place data for any location globally
-- Your data volume is small (< 1,000 requests/day on public OSM)
-- You want zero data management overhead
-- You want turn-by-turn routing or traffic-aware ETAs
-
-**The production pattern used by Uber/Swiggy/Zomato:** Scenario A for internal filtering + Scenario B only for final road-network routing.
+> 📖 Full deep-dive guide (service code walkthrough, Overpass QL explained, Haversine formula, Leaflet integration, troubleshooting, exercises): **[`src/guide/README.md`](src/guide/README.md)** on this branch.
 
 ---
 
-## 📚 Further Reading
+---
 
-| Topic                 | Resource                                                                              |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| PostGIS documentation | https://postgis.net/docs/                                                             |
-| Nominatim API         | https://nominatim.org/release-docs/develop/api/Search/                                |
-| Overpass API / QL     | https://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide                       |
-| Leaflet (React)       | https://react-leaflet.js.org/                                                         |
-| Spring WebFlux        | https://docs.spring.io/spring-framework/docs/current/reference/html/web-reactive.html |
-| JHipster 8.8.0        | https://www.jhipster.tech/documentation-archive/v8.8.0                                |
+## 🔑 Side-by-Side Comparison
+
+|                                  | `feat/scenario-a-swiggy` — Scenario A        | `main` — Scenario B                            |
+| -------------------------------- | -------------------------------------------- | ---------------------------------------------- |
+| **Approach name**                | Database-Backed Spatial (PostGIS)            | External API-Driven (OpenStreetMap)            |
+| **Where is geo data stored?**    | PostgreSQL with PostGIS `GEOGRAPHY` columns  | Not stored — fetched live from OSM per request |
+| **Where is computation done?**   | Inside the DB engine (PostGIS SQL functions) | Java application memory (Haversine formula)    |
+| **Database extension required?** | PostgreSQL + PostGIS 3.3                     | Standard PostgreSQL only                       |
+| **Internet required?**           | No — fully self-contained                    | Yes — calls OSM public APIs                    |
+| **Data coverage**                | Ottapalam + Palakkad (seeded demo data)      | All of India (live OSM data)                   |
+| **Data freshness**               | Static seed data                             | Always current — live OSM edits                |
+| **Scale at production**          | Excellent — GiST index, O(log N)             | Limited by Nominatim 1 req/sec rate limit      |
+| **API key required?**            | None                                         | None (OSM APIs are free)                       |
+| **Core query mechanism**         | `ST_DWithin`, `ST_Contains`, `<->` KNN       | Overpass QL `(around:radius,lat,lng)`          |
+| **Frontend**                     | Angular                                      | React + React-Leaflet                          |
+| **Key things you learn**         | PostGIS types, GiST indexes, spatial SQL     | Geocoding, Overpass QL, Haversine, Leaflet     |
+
+### When to Use Which in Production
+
+| Use Case                                                  | Recommended Approach                |
+| --------------------------------------------------------- | ----------------------------------- |
+| Filter your own database of places by proximity           | **Scenario A (PostGIS)**            |
+| Check if a GPS point is inside a polygon                  | **Scenario A — `ST_Contains`**      |
+| Find the nearest entity from a large dataset              | **Scenario A — KNN `<->` operator** |
+| Search for real-world public places anywhere in the world | **Scenario B (OSM APIs)**           |
+| Show up-to-date data without maintaining a database       | **Scenario B**                      |
+| High-traffic production app with millisecond SLA          | **Scenario A**                      |
+| Prototype or low-traffic app with no data to seed         | **Scenario B**                      |
+
+> 💡 **Real-world pattern (Uber/Swiggy/Zomato):** Scenario A for internal data (rider positions, restaurant locations, delivery zones). Scenario B only for map tiles, turn-by-turn routing, and geocoding user addresses.
+
+---
+
+## 📚 Documentation
+
+| Branch                   | In-Depth Guide                                                                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `feat/scenario-a-swiggy` | [`src/guide/README.md`](src/guide/README.md) — PostGIS concepts, query walkthroughs, seed data, GiST index verification, exercises |
+| `main`                   | [`src/guide/README.md`](src/guide/README.md) — Nominatim, Overpass QL, Haversine, Leaflet integration, troubleshooting, exercises  |
+
+---
+
+## 📖 Further Reading
+
+| Topic                       | Resource                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------- |
+| PostGIS documentation       | https://postgis.net/docs/                                                             |
+| PostGIS intro workshop      | https://postgis.net/workshops/postgis-intro/                                          |
+| Nominatim API               | https://nominatim.org/release-docs/develop/api/Search/                                |
+| Overpass API & QL           | https://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide                       |
+| OSM Map Features (tag list) | https://wiki.openstreetmap.org/wiki/Map_features                                      |
+| React-Leaflet               | https://react-leaflet.js.org/                                                         |
+| Spring WebFlux              | https://docs.spring.io/spring-framework/docs/current/reference/html/web-reactive.html |
+| JHipster 8.8.0              | https://www.jhipster.tech/documentation-archive/v8.8.0                                |
 
 ---
 
